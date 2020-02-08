@@ -92,11 +92,16 @@ MACRO(ADD_SIP_PYTHON_MODULE MODULE_NAME MODULE_SIP)
         ENDIF( ${CONCAT_NUM} LESS ${SIP_CONCAT_PARTS} )
     ENDFOREACH(CONCAT_NUM RANGE 0 ${SIP_CONCAT_PARTS} )
 
+    # Generate stub file, SIP>=4.18
+    IF(SIP_VERSION GREATER_EQUAL 041200)
+        SET(sip_stub_option "-y${_child_module_name}.pyi")
+    ENDIF(SIP_VERSION GREATER_EQUAL 041200)
+
     ADD_CUSTOM_COMMAND(
         OUTPUT ${_sip_output_files}
         COMMAND ${CMAKE_COMMAND} -E echo ${message}
         COMMAND ${CMAKE_COMMAND} -E touch ${_sip_output_files}
-        COMMAND ${SIP_EXECUTABLE} ${_sip_tags} ${_sip_x} ${SIP_EXTRA_OPTIONS} -j ${SIP_CONCAT_PARTS} -c ${CMAKE_CURRENT_SIP_OUTPUT_DIR} ${_sip_includes} ${_abs_module_sip}
+        COMMAND ${SIP_EXECUTABLE} ${_sip_tags} ${_sip_x} ${SIP_EXTRA_OPTIONS} -j ${SIP_CONCAT_PARTS} -c ${CMAKE_CURRENT_SIP_OUTPUT_DIR} ${sip_stub_option} ${_sip_includes} ${_abs_module_sip}
         DEPENDS ${SIP_INCLUDES} ${SIP_EXTRA_FILES_DEPEND}
     )
     # not sure if type MODULE could be uses anywhere, limit to cygwin for now
@@ -114,4 +119,9 @@ MACRO(ADD_SIP_PYTHON_MODULE MODULE_NAME MODULE_SIP)
 
     INSTALL(TARGETS ${_logical_name} DESTINATION "${PYTHON_SITE_PACKAGES_INSTALL_DIR}/${_parent_module_path}")
 
+    # Install stub file, SIP>=4.18
+    IF(SIP_VERSION GREATER_EQUAL 041200)
+        INSTALL(FILES "${CMAKE_CURRENT_BINARY_DIR}/${_parent_module_path}/${_child_module_name}.pyi"
+                DESTINATION "${PYTHON_SITE_PACKAGES_INSTALL_DIR}/${_parent_module_path}")
+    ENDIF(SIP_VERSION GREATER_EQUAL 041200)
 ENDMACRO(ADD_SIP_PYTHON_MODULE)
